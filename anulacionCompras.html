@@ -7,32 +7,17 @@
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body {
-      background: linear-gradient(to right, #cfd9df, #e2ebf0);
-      height: 100vh;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .card {
-      border-radius: 15px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      padding: 20px;  /* Box model */
-      margin: 10px;   /* Box model */
-    }
-    .btn-custom {
-      background-color: #f4a261;
-      color: white;
-      font-weight: 600;
-    }
-    .btn-custom:hover {
-      background-color: #d48845;
-    }
-    .sale-list {
-      max-height: 200px;
-      overflow-y: auto;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    :root{--bg1:#e8f5e9;--bg2:#f0fff6;--accent:#2e7d32;--accent-2:#60a56a;--muted:#6b7280}
+    *{box-sizing:border-box}
+    body{font-family:'Inter',system-ui,Arial;background:linear-gradient(90deg,var(--bg1),var(--bg2));min-height:100vh;margin:0;padding:28px;display:flex;align-items:center;justify-content:center;color:#042613}
+    .card{background:#fff;border-radius:12px;padding:22px;box-shadow:0 12px 30px rgba(10,20,10,0.06);border:1px solid rgba(2,6,8,0.04);width:100%;max-width:520px}
+    h3{color:var(--accent);font-weight:700}
+    .btn-custom{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#042613;border:none;font-weight:700}
+    .btn-custom:hover{opacity:.95}
+    .sale-list{max-height:240px;overflow:auto;padding-right:6px}
+    .muted{color:var(--muted)}
+    .form-label{font-weight:600}
   </style>
 </head>
 <body>
@@ -64,8 +49,7 @@
           </div>
 
           <div class="mt-4 text-center">
-            <a href="US-06.html" class="text-decoration-none me-3">⬅ Volver a Ventas</a>
-            <a href="US-08.html" class="text-decoration-none">➡ Ir a Reportes</a>
+            <a href="realizacionVentas.html" class="text-decoration-none me-3">⬅ Volver a Ventas</a>
           </div>
         </section>
       </div>
@@ -77,31 +61,80 @@
   <script>
     const form = document.getElementById("anulacionForm");
     const lista = document.getElementById("anuladasList");
+    const ventaSelect = document.getElementById('venta');
 
-    form.addEventListener("submit", function(e){
+    function leerCarrito(){
+      try{ return JSON.parse(localStorage.getItem('carrito_v1')||'[]'); }catch(e){ return []; }
+    }
+
+    function guardarCarrito(c){
+      try{ localStorage.setItem('carrito_v1', JSON.stringify(c)); }catch(e){ console.error(e); }
+    }
+
+    function cargarOpcionesDeCarrito(){
+      const carrito = leerCarrito();
+      ventaSelect.innerHTML = '<option value="">Selecciona...</option>';
+      if(!carrito || carrito.length === 0){
+        ventaSelect.innerHTML = '<option value="">(No hay items en el carrito)</option>';
+        form.querySelector('button[type="submit"]').disabled = true;
+        return;
+      }
+      form.querySelector('button[type="submit"]').disabled = false;
+      carrito.forEach((item, idx) => {
+        const qty = Number(item.cantidad)||1;
+        const lineTotal = (Number(item.precio)||0) * qty;
+        let label = `${item.nombre} x ${qty} - Total: $${lineTotal}`;
+        if(item.descripcion) label += ` — ${item.descripcion}`;
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = label;
+        ventaSelect.appendChild(opt);
+      });
+    }
+
+    form.addEventListener('submit', function(e){
       e.preventDefault();
-      const venta = document.getElementById("venta").value;
-      const motivo = document.getElementById("motivo").value.trim();
+      const idx = document.getElementById('venta').value;
+      const motivo = document.getElementById('motivo').value.trim();
 
-      if(!venta || !motivo){
-        alert("Todos los campos son obligatorios");
+      if(idx === '' || !motivo){
+        alert('Selecciona un producto y describe el motivo.');
         return;
       }
 
-      const li = document.createElement("li");
-      li.className = "list-group-item d-flex justify-content-between align-items-center";
-      li.innerHTML = `
-        <span>${venta} - Motivo: ${motivo}</span>
-        <button class="btn btn-sm btn-danger">Eliminar</button>
-      `;
-      li.querySelector("button").addEventListener("click", () => {
-        lista.removeChild(li);
-      });
+      const carrito = leerCarrito();
+      const index = Number(idx);
+      if(index < 0 || index >= carrito.length){
+        alert('Ítem inválido. Refresca la página.');
+        return;
+      }
 
-      lista.appendChild(li);
-      alert(`Venta anulada: ${venta} | Motivo: ${motivo}`);
+      const item = carrito.splice(index,1)[0];
+      guardarCarrito(carrito);
+
+      // Mostrar en la lista de anuladas 
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-start';
+      const left = document.createElement('div');
+      left.innerHTML = `<div><strong>${item.nombre} x ${item.cantidad || 1}</strong></div><div class="small text-muted">${item.descripcion || ''}</div><div class="small">Motivo: ${motivo}</div>`;
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-sm btn-outline-secondary';
+      btn.textContent = 'Deshacer (no disponible)';
+      
+      btn.addEventListener('click', ()=>{ alert('Deshacer no disponible.'); });
+      li.appendChild(left);
+      const right = document.createElement('div');
+      right.appendChild(btn);
+      li.appendChild(right);
+
+      lista.prepend(li);
+      alert(`Producto anulado: ${item.nombre} | Motivo: ${motivo}`);
       form.reset();
+      cargarOpcionesDeCarrito();
     });
+
+    // Inicializar opciones
+    window.addEventListener('load', cargarOpcionesDeCarrito);
   </script>
 </body>
 </html>
