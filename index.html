@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GreenBowl - Tienda de Ensaladas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+
+    /* NAVBAR */
+    header {
+      background-color: #ffffff;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 40px;
+    }
+
+    .logo {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #2e7d32;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #333;
+      margin: 0 15px;
+      font-weight: 500;
+    }
+
+    nav a:hover {
+      color: #2e7d32;
+    }
+
+    .login-btn {
+      background-color: #ffcc00;
+      color: #333;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .login-btn:hover {
+      background-color: #f4b400;
+    }
+
+    /* SECCIÓN DE PRODUCTOS */
+    .container {
+      max-width: 1000px;
+      margin: 40px auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .product {
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      text-align: center;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: 0.2s;
+    }
+
+    .product:hover {
+      transform: scale(1.03);
+    }
+
+    .product img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    .product h3 {
+      color: #2e7d32;
+      margin: 10px 0 5px 0;
+    }
+
+    .price {
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    .add-btn {
+      background-color: #2e7d32;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .add-btn:hover {
+      background-color: #1b5e20;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header>
+    <div class="logo">GreenBowl</div>
+    <nav>
+      <a href="#">Quiénes Somos</a>
+      <a href="#">Productos</a>
+      <a href="#">Promociones</a>
+      <a href="#">Delivery</a>
+      <a href="#">Contacto</a>
+      <button class="login-btn">Iniciar Sesión</button>
+    </nav>
+  </header>
+
+  <!-- PRODUCTOS -->
+  <section class="container">
+    <div class="product">
+      <img src="https://images.unsplash.com/photo-1604328698692-f76ea9498e76" alt="Ensalada César">
+      <h3>Ensalada César</h3>
+      <p class="price">CLP$ 3.500</p>
+      <button class="add-btn">Agregar</button>
+    </div>
+
+    <div class="product">
+      <img src="https://images.unsplash.com/photo-1552332386-f8dd00dc2f85" alt="Ensalada Mediterránea">
+      <h3>Ensalada Mediterránea</h3>
+      <p class="price">CLP$ 3.800</p>
+      <button class="add-btn">Agregar</button>
+    </div>
+
+    <div class="product">
+      <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2" alt="Ensalada Quinoa">
+      <h3>Ensalada de Quinoa</h3>
+      <p class="price">CLP$ 4.000</p>
+      <button class="add-btn">Agregar</button>
+    </div>
+
+    <div class="product">
+      <img src="https://images.unsplash.com/photo-1604908177097-d9b4fbc73a9f" alt="Ensalada Vegana">
+      <h3>Ensalada Vegana</h3>
+      <p class="price">CLP$ 3.700</p>
+      <button class="add-btn">Agregar</button>
+    </div>
+  </section>
+
+</body>
+</html>
