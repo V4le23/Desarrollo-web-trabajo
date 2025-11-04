@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fresh Bowl - Ensaladas personalizadas</title>
+  <style>
+    .titulo-hero {
+      color: #2e5e1b;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: rgba(200, 255, 240, 0.5);
+    }
+
+    header {
+      background-color: #2e5e1b;
+      color: rgb(174, 211, 193);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 50px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo { font-size: 1.6em; font-weight: bold; }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin: 0 15px;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    nav a:hover { color: #a5d6a7; }
+
+    .login-btn, .cart-btn {
+      background-color: #ffcc00;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 10px;
+      color: #333;
+    }
+
+    .login-btn:hover, .cart-btn:hover {
+      background-color: #f4b400;
+    }
+
+    .hero {
+      background-image: url('https://images.unsplash.com/photo-1556911220-e15b29be8c5d');
+      background-size: cover;
+      background-position: center;
+      height: 70vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    .hero h1 {
+      font-size: 3em;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .hero p {
+      font-size: 1.2em;
+      margin-top: 10px;
+      text-shadow: 1px 1px 6px rgba(0,0,0,0.4);
+    }
+
+    section.container {
+      max-width: 1000px;
+      margin: 60px auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 25px;
+      padding: 0 20px;
+    }
+
+    .product {
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      text-align: center;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: 0.2s;
+    }
+
+    .product:hover { transform: scale(1.03); }
+
+    .product img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    .product h3 { color: #2e7d32; margin: 10px 0 5px 0; }
+
+    .price { color: #555; margin-bottom: 10px; }
+
+    .add-btn {
+      background-color: #2e7d32;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .add-btn:hover { background-color: #1b5e20; }
+
+    /* MODAL CARRITO */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 20;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      width: 350px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .modal-content h2 { margin-bottom: 20px; }
+
+    .delete-btn {
+      background-color: #c62828;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 3px 6px;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 0.8em;
+    }
+
+    .delete-btn:hover { background-color: #b71c1c; }
+
+    .pay-btn {
+      background-color: #2e7d32;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .pay-btn:hover { background-color: #1b5e20; }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">🥗 Fresh Bowl</div>
+    <nav>
+      <a href="#inicio">Inicio</a>
+      <a href="#catalogo">Catálogo</a>
+      <a href="#nosotros">Nosotros</a>
+      <a href="#contacto">Contacto</a>
+      <button class="login-btn" onclick="window.location.href='InicioSesion.html'">Iniciar Sesión</button>
+      <button class="cart-btn" id="openCart">🛒 Carrito</button>
+    </nav>
+  </header>
+
+  <!-- MODAL CARRITO -->
+  <div class="modal" id="cartModal">
+    <div class="modal-content">
+      <h2>Carrito de Compras</h2>
+      <div id="cartItems">(Tu carrito está vacío)</div>
+      <button class="pay-btn" onclick="irAPagar()">Ir a pagar 💳</button>
+      <button onclick="closeCart()" style="margin-top:10px; background:#ccc; color:#333; border:none; padding:8px 16px; border-radius:5px;">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero" id="inicio">
+    <h1><span class="titulo-hero">Las mejores ensaladas personalizadas a gusto</span></h1>
+    <p class="titulo-hero">Disfruta frescura, sabor y bienestar en cada bocado</p>
+  </section>
+
+  <!-- CATÁLOGO -->
+  <section class="container" id="catalogo">
+    <div class="product">
+      <img src="https://newmansown.com/wp-content/uploads/2022/05/antipasto-caesar-salad.png" alt="Ensalada César">
+      <h3>Ensalada César</h3>
+      <p class="price">CLP$ 3.500</p>
+      <button class="add-btn" onclick="agregarAlCarrito('Ensalada César', 3500, event)">Agregar</button>
+    </div>
+
+    <div class="product">
+      <img src="https://comedera.com/wp-content/uploads/sites/9/2024/10/ensalada-mediterranea-de-tomate-aceitunas-y-queso-feta.jpg?fit=1316,877&crop=0px,69px,1316px,740px" alt="Ensalada Mediterránea">
+      <h3>Ensalada Mediterránea</h3>
+      <p class="price">CLP$ 3.800</p>
+      <button class="add-btn" onclick="agregarAlCarrito('Ensalada Mediterránea', 3800, event)">Agregar</button>
+    </div>
+
+    <div class="product">
+      <img src="https://www.recetaslider.cl/wp-content/uploads/2021/06/principal_5cb62f13ceb97.jpg" alt="Ensalada de Quinoa">
+      <h3>Ensalada de Quinoa</h3>
+      <p class="price">CLP$ 4.000</p>
+      <button class="add-btn" onclick="agregarAlCarrito('Ensalada de Quinoa', 4000, event)">Agregar</button>
+    </div>
+
+    <div class="product">
+      <img src="https://www.gourmet.cl/wp-content/uploads/2017/08/Ensalada-chilena-web-570x458.jpg" alt="Ensalada Chilena">
+      <h3>Ensalada Chilena</h3>
+      <p class="price">CLP$ 2.500</p>
+      <button class="add-btn" onclick="agregarAlCarrito('Ensalada Chilena', 2500, event)">Agregar</button>
+    </div>
+
+    <div class="product">
+      <img src="https://images.unsplash.com/photo-1544025162-d76694265947" alt="Personalizar Ensalada">
+      <h3>Personalizar Ensalada</h3>
+      <p class="price">CLP$ Desde 2.500</p>
+      <button class="add-btn" onclick="window.location.href='generacionPedidos.html'">Personalizar</button>
+    </div>
+  </section>
+
+  <!-- NOSOTROS -->
+  <section id="nosotros" style="padding:50px; text-align:center; background-color:#e8f5e9;">
+    <h2>Sobre Nosotros</h2>
+    <p style="max-width:600px; margin:20px auto;">
+      En Fresh Bowl creemos en la alimentación saludable sin sacrificar el sabor.
+      Nuestras ensaladas están elaboradas con ingredientes frescos, locales y llenos de vida.
+    </p>
+  </section>
+
+  <!-- CONTACTO -->
+  <section id="contacto" style="padding:50px; text-align:center;">
+    <h2>Contacto</h2>
+    <p>📞 +56 9 1234 5678 | 📧 contacto@freshbowl.cl</p>
+  </section>
+
+  <script>
+    // Modal carrito
+    const cartModal = document.getElementById("cartModal");
+    const openCartBtn = document.getElementById("openCart");
+    function closeCart() { cartModal.style.display = "none"; }
+    openCartBtn.onclick = () => { cartModal.style.display = "flex"; };
+    window.onclick = function(event) {
+      if (event.target == cartModal) cartModal.style.display = "none";
+    };
+
+    // Carrito de compras
+    let carrito = [];
+
+    function agregarAlCarrito(nombre, precio, event) {
+      carrito.push({ nombre, precio });
+      mostrarCarrito();
+      animacionAgregar(event.currentTarget);
+    }
+
+    function eliminarDelCarrito(index) {
+      carrito.splice(index, 1);
+      mostrarCarrito();
+    }
+
+    function mostrarCarrito() {
+      const cartItems = document.getElementById('cartItems');
+      if (carrito.length === 0) {
+        cartItems.textContent = '(Tu carrito está vacío)';
+        return;
+      }
+      let html = '<ul style="text-align:left; padding-left:0">';
+      let total = 0;
+      carrito.forEach((item, i) => {
+        html += `<li style="list-style:none; margin-bottom:6px;">
+          ${item.nombre} - $${item.precio.toLocaleString('es-CL')}
+          <button class="delete-btn" onclick="eliminarDelCarrito(${i})">Eliminar</button>
+        </li>`;
+        total += item.precio;
+      });
+      html += `</ul><hr><b>Total: $${total.toLocaleString('es-CL')}</b>`;
+      cartItems.innerHTML = html;
+    }
+
+    function irAPagar() {
+      if (carrito.length === 0) {
+        alert("Tu carrito está vacío. Agrega productos antes de pagar.");
+      } else {
+        // Guardar carrito en localStorage para que la página de realización de ventas lo reciba
+        try{ localStorage.setItem('carrito_v1', JSON.stringify(carrito)); }catch(e){ console.error(e); }
+        alert("Redirigiendo a la página de pago...");
+        window.location.href = 'realizacionVentas.html';
+      }
+    }
+
+    // ANIMACIÓN 🥗
+    function animacionAgregar(btn) {
+      const icono = document.createElement('div');
+      icono.textContent = "🥗";
+      icono.style.position = 'fixed';
+      icono.style.fontSize = '24px';
+      icono.style.zIndex = '1000';
+      
+      const rect = btn.getBoundingClientRect();
+      icono.style.left = rect.left + rect.width / 2 + 'px';
+      icono.style.top = rect.top + 'px';
+      document.body.appendChild(icono);
+      
+      const carritoRect = document.getElementById("openCart").getBoundingClientRect();
+
+      icono.animate([
+        { transform: 'translate(0, 0)', opacity: 1 },
+        { transform: `translate(${carritoRect.left - rect.left}px, ${carritoRect.top - rect.top}px) scale(0.5)`, opacity: 0 }
+      ], {
+        duration: 800,
+        easing: 'ease-in-out'
+      });
+
+      setTimeout(() => icono.remove(), 800);
+    }
+  </script>
+
+</body>
+</html>
