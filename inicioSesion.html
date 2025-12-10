@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>B01 - Inicio de sesión</title>
+
+  <!-- Bootstrap (misma CDN que en los otros archivos) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    :root{--bg1:#e8f5e9;--bg2:#f0fff6;--accent:#2e7d32;--muted:#6b7280}
+    html,body{height:100%;margin:0;font-family:'Inter',system-ui,Arial;background:linear-gradient(90deg,var(--bg1),var(--bg2));color:#042613}
+    header.site-header{background:transparent;color:#042613;font-weight:700;font-size:14px;text-align:center;padding:14px 10px}
+    .auth-card{border-radius:12px;padding:22px;margin:28px 0;box-shadow:0 12px 30px rgba(10,20,10,0.06);background:#fff;border:1px solid rgba(2,6,8,0.04)}
+    .form-field{background:#fbfff9;border:1px solid rgba(2,6,8,0.04);border-radius:8px;padding:10px 12px}
+    .btn-main{background:linear-gradient(90deg,var(--accent),#60a56a);color:#042613;border:none;font-weight:700;border-radius:10px;padding:10px 14px}
+    .btn-main:hover{opacity:.95}
+    .link-login{color:var(--accent)}
+    .msg{min-height:22px;font-weight:600}
+    .vh-center{min-height:calc(100vh - 120px);display:flex;align-items:center;justify-content:center}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    LOGO | Registro de Cliente | Iniciar sesión
+  </header>
+
+  <main class="container vh-center" role="main">
+    <div class="row justify-content-center w-100">
+      <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+        <section class="auth-card">
+          <h3 class="text-center">Iniciar Sesión</h3>
+
+          <form action="/login" method="POST" class="d-grid gap-3">
+            <div>
+              <label for="email" class="form-label visually-hidden">Correo electrónico</label>
+              <input name="correo" id="email" class="form-field" type="email" placeholder="Correo electrónico" required />
+            </div>
+
+            <div>
+              <label for="password" class="form-label visually-hidden">Contraseña</label>
+              <input name="contraseña" id="password" class="form-field" type="password" placeholder="Contraseña" required />
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="remember">
+                <label class="form-check-label" for="remember">Recordarme</label>
+              </div>
+              <a href="registroUsuario.html" class="link-login">Crear cuenta</a>
+            </div>
+
+            <button type="submit" class="btn-main w-100">Iniciar Sesión</button>
+          </form>
+
+          <div id="message" class="msg text-center" style="color: #b71c1c; margin-top: 15px; padding: 10px; border-radius: 6px; min-height: auto;"></div>
+
+          <div class="text-center"></div>
+          
+            <script>
+              (function(){
+                const form = document.querySelector('form[action="/login"]');
+                if (!form) return;
+
+                form.addEventListener('submit', function(e){
+                  e.preventDefault();
+
+                  const data = new FormData(form);
+                  const payload = {};
+                  data.forEach((v,k)=> payload[k]=v);
+
+                  console.log("🔐 Enviando login:", payload);
+
+                  fetch(form.action, {
+                    method: form.method || 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                  }).then(r => {
+                    console.log("🔐 Respuesta del servidor:", r.status, r.statusText);
+                    return r.json();
+                  }).then(result => {
+                    console.log("🔐 JSON parseado:", result);
+                    if (result.ok && result.usuario) {
+                      console.log("✅ Guardando usuario en localStorage:", result.usuario);
+                      try {
+                        localStorage.setItem('usuario_activo', JSON.stringify(result.usuario));
+                        console.log("✅ Usuario guardado. Verificando:", localStorage.getItem('usuario_activo'));
+                      } catch (e) {
+                        console.error('❌ Error al guardar en localStorage:', e);
+                      }
+                      window.location.href = 'index.html';
+                    } else {
+                      const msg = document.getElementById('message');
+                      const errorMsg = result.error || 'Error al iniciar sesión';
+                      msg.textContent = errorMsg;
+                      msg.style.color = '#d32f2f';
+                      msg.style.backgroundColor = '#ffebee';
+                      msg.style.padding = '12px';
+                      msg.style.borderRadius = '6px';
+                      msg.style.border = '1px solid #f44336';
+                      msg.style.display = 'block';
+                      console.log("❌ Error:", errorMsg);
+                    }
+                  }).catch(err => {
+                    console.error('❌ Error de conexión:', err);
+                    window.location.href = 'index.html';
+                  });
+                });
+              })();
+            </script>

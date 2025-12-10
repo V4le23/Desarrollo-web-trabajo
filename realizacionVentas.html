@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US-06 Realización de Ventas</title>
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(to right, #fbc2eb, #a6c1ee);
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .card {
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      padding: 20px;  /* Box model */
+      margin: 10px;   /* Box model */
+    }
+    .btn-custom {
+      background-color: #e76f51;
+      color: white;
+      font-weight: 600;
+    }
+    .btn-custom:hover {
+      background-color: #c1573e;
+    }
+    .sale-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    /* estilos para opciones seleccionables */
+    .choices { display:flex; gap:8px; }
+    .choice-btn {
+      position:relative;
+      padding:8px 12px 8px 36px;
+      border-radius:8px;
+      border:1px solid #d1d5db;
+      background:white;
+      cursor:pointer;
+      color:#111827;
+      flex:1;
+      text-align:left;
+    }
+    .choice-btn::before{
+      content:'';
+      position:absolute;
+      left:12px;
+      top:50%;
+      transform:translateY(-50%);
+      width:16px;height:16px;border-radius:50%;
+      background:#fff;border:2px solid #9ca3af;
+    }
+    .choice-btn.selected{ border-color:#2563eb; box-shadow:0 1px 0 rgba(37,99,235,0.06); }
+    .choice-btn.selected::before{ background:#2563eb; border-color:#2563eb; box-shadow:0 0 0 6px rgba(37,99,235,0.12); }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-sm-10 col-md-6 col-lg-5">
+        <section class="card d-flex flex-column">
+          <h3 class="text-center mb-4">Realización de Ventas</h3>
+
+          <!-- Formulario de venta eliminado según petición (producto, cantidad, método de pago y botón confirmación) -->
+
+          <div class="mt-4">
+            <h5 class="text-center">Comprobante de Ventas</h5>
+            <ul id="saleList" class="list-group sale-list"></ul>
+            <div id="cartSummary" class="mt-3"></div>
+            <div class="d-flex gap-2 mt-2">
+
+              <div class="choices flex-fill" id="deliveryChoices">
+                <button type="button" id="choiceRetirar" class="choice-btn" data-value="retirar">Retirar en tienda</button>
+                <button type="button" id="choiceDomicilio" class="choice-btn" data-value="domicilio">Despacho a domicilio</button>
+              </div>
+              <input type="hidden" id="selectedDelivery" value="">
+              <button id="payBtn" class="btn btn-primary">Pagar y volver al inicio</button>
+            </div>
+              <div class="mt-3">
+                <label class="form-label">Método de pago</label>
+                <div class="d-flex gap-3 align-items-center mb-2">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="metodoPago" id="pagoTarjeta" value="tarjeta" checked>
+                    <label class="form-check-label" for="pagoTarjeta">Tarjeta</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="metodoPago" id="pagoEfectivo" value="efectivo">
+                    <label class="form-check-label" for="pagoEfectivo">Efectivo</label>
+                  </div>
+                </div>
+
+                <div id="cardForm">
+                  <input id="cardName" type="text" class="form-control mb-2" placeholder="Nombre en la tarjeta">
+                  <input id="cardNumber" type="text" class="form-control mb-2" placeholder="Número de tarjeta (sin espacios)">
+                  <div class="d-flex gap-2">
+                    <input id="cardExp" type="text" class="form-control" placeholder="MM/AA">
+                    <input id="cardCVV" type="text" class="form-control" placeholder="CVV">
+                  </div>
+                  <div id="cardError" class="text-danger small mt-2" style="display:none"></div>
+                </div>
+              </div>
+          </div>
+
+          <div class="mt-4 text-center">
+            <!-- Enlace a pedidos eliminado según solicitud -->
+
+             <!-- ⬅ ➡ -->
+            <a href="anulacionCompras.html" class="text-decoration-none"> Anular producto</a>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const lista = document.getElementById("saleList");
+    const cartSummary = document.getElementById('cartSummary');
+  const choiceRetirar = document.getElementById('choiceRetirar');
+  const choiceDomicilio = document.getElementById('choiceDomicilio');
+  const selectedDelivery = document.getElementById('selectedDelivery');
+
+    function leerCarritoLocal(){
+      try{ return JSON.parse(localStorage.getItem('carrito_v1')||'[]'); }catch(e){ return []; }
+    }
+
+    function renderCarritoEnVenta(){
+      const carrito = leerCarritoLocal();
+      if(!carrito || carrito.length === 0){ cartSummary.innerHTML = '<div class="muted">No hay items en el carrito.</div>'; 
+        // deshabilitar choices
+        if (choiceRetirar) choiceRetirar.disabled = true; if (choiceDomicilio) choiceDomicilio.disabled = true; 
+        selectedDelivery.value = '';
+        return; }
+      let html = '<ul class="list-group mb-2">';
+      let total = 0;
+      carrito.forEach(i=>{
+        const lineTotal = (Number(i.precio)||0) * (Number(i.cantidad)||1);
+        html += `<li class="list-group-item d-flex justify-content-between">${i.nombre} x ${i.cantidad || 1} <span>$${lineTotal}</span></li>`;
+        total += lineTotal;
+      });
+      html += `</ul><div><strong>Total carrito: $${total}</strong></div>`;
+      cartSummary.innerHTML = html;
+  // habilitar botones de acción cuando hay items
+  if (choiceRetirar) choiceRetirar.disabled = false;
+  if (choiceDomicilio) choiceDomicilio.disabled = false;
+    }
+
+    // Manejo de selección visual de las opciones
+    function clearSelection(){
+      [choiceRetirar, choiceDomicilio].forEach(btn=>{ if(btn) btn.classList.remove('selected'); });
+      selectedDelivery.value = '';
+    }
+
+    if (choiceRetirar) choiceRetirar.addEventListener('click', ()=>{
+      clearSelection();
+      choiceRetirar.classList.add('selected');
+      selectedDelivery.value = 'retirar';
+    });
+    if (choiceDomicilio) choiceDomicilio.addEventListener('click', ()=>{
+      clearSelection();
+      choiceDomicilio.classList.add('selected');
+      selectedDelivery.value = 'domicilio';
+    });
+
+    // Pagar y volver al inicio: guarda el pedido en 'pedidos', limpia carrito y redirige a index.html
+    const payBtn = document.getElementById('payBtn');
+    function guardarPedidoFinal(ped){
+      try{
+        const existing = JSON.parse(localStorage.getItem('pedidos')||'[]');
+        existing.push(ped);
+        localStorage.setItem('pedidos', JSON.stringify(existing));
+      }catch(e){ console.error('No se pudo guardar pedido', e); }
+    }
+
+    payBtn.addEventListener('click', ()=>{
+      const carrito = leerCarritoLocal();
+      if(!carrito || carrito.length === 0){ alert('No hay items en el carrito.'); return; }
+
+      const delivery = selectedDelivery.value;
+      if (!delivery) { alert('Por favor, selecciona Retirar en tienda o Despacho a domicilio antes de pagar.'); return; }
+      if(!confirm('Confirmar pago y volver al inicio?')) return;
+
+      let total = 0;
+      const resumen = carrito.map(i=>{
+        const qty = Number(i.cantidad)||1;
+        const lineTotal = (Number(i.precio)||0) * qty;
+        total += lineTotal;
+        return { nombre: i.nombre, cantidad: qty, linea: lineTotal, descripcion: i.descripcion || '' };
+      });
+
+      // manejar método de pago
+      const metodo = document.querySelector('input[name="metodoPago"]:checked').value;
+      let pagoInfo = { metodo };
+      if(metodo === 'tarjeta'){
+        const name = document.getElementById('cardName').value.trim();
+        // quitar todo lo no numérico del número y CVV
+        let number = document.getElementById('cardNumber').value.replace(/\D/g,'').trim();
+        const expRaw = document.getElementById('cardExp').value.trim();
+        const cvv = document.getElementById('cardCVV').value.replace(/\D/g,'').trim();
+
+        // validaciones mejoradas y mensajes específicos
+        const cardErrorEl = document.getElementById('cardError');
+        cardErrorEl.style.display = 'none';
+        const errors = [];
+        if (!name) errors.push('Nombre en la tarjeta es requerido.');
+        // aceptar tarjetas entre 13 y 19 dígitos (quitando espacios/guiones)
+        if (!/^[0-9]{13,19}$/.test(number)) errors.push('Número de tarjeta inválido (13-19 dígitos).');
+        if (!/^[0-9]{3,4}$/.test(cvv)) errors.push('CVV inválido (3 o 4 dígitos).');
+        // aceptar múltiples formatos: MM/AA, MM/AAAA, MMYY, MYY o 3-4 dígitos sin separador (por ejemplo 925 -> 09/25)
+        let month = null;
+        let yearStr = null;
+        const exp = expRaw.replace(/\s+/g,'');
+        if (/^(0?[1-9]|1[0-2])\/(?:[0-9]{2}|[0-9]{4})$/.test(exp)){
+          const parts = exp.split('/'); month = parseInt(parts[0],10); yearStr = parts[1];
+        } else if (/^\d{3,4}$/.test(exp)){
+          // 3 digits: MYY (e.g., 925 -> month=9, year=25)
+          if (exp.length === 3){ month = parseInt(exp.charAt(0),10); yearStr = exp.slice(1); }
+          else { month = parseInt(exp.slice(0,2),10); yearStr = exp.slice(2); }
+        } else {
+          errors.push('Vencimiento inválido (ej: MM/AA, MM/AAAA, 0925 o 925).');
+        }
+        if (month !== null){
+          if (!(month >=1 && month <=12)) errors.push('Mes inválido en vencimiento.');
+          if (!(yearStr && (yearStr.length === 2 || yearStr.length === 4))) errors.push('Año inválido en vencimiento.');
+        }
+
+        if (errors.length > 0) {
+          cardErrorEl.textContent = errors.join(' ');
+          cardErrorEl.style.display = 'block';
+          return;
+        }
+
+        // maskear número (ultimos 4 dígitos)
+        const masked = '**** **** **** ' + number.slice(-4);
+        pagoInfo = { metodo: 'tarjeta', nombreTitular: name, tarjetaUlt4: number.slice(-4), tarjetaMask: masked };
+      }
+
+      // si domicilio, obtener direccion registrada o pedirla
+      let direccion = null;
+      if (delivery === 'domicilio'){
+        try{
+          const storedUser = JSON.parse(localStorage.getItem('usuario_activo') || 'null');
+          if (storedUser && storedUser.direccion) direccion = storedUser.direccion;
+          if (!direccion) {
+            const usuarios = JSON.parse(localStorage.getItem('usuarios')||'[]');
+            if (usuarios.length>0) direccion = usuarios[usuarios.length-1].direccion || null;
+          }
+        }catch(e){ console.error(e); }
+        // No pedir dirección aquí; proceder aunque no esté registrada.
+      }
+
+      const pedido = { id: 'pedido_' + Date.now(), items: resumen, total, fecha: new Date().toISOString(), pago: pagoInfo, tipo: delivery };
+      if (direccion) pedido.direccion = direccion;
+      guardarPedidoFinal(pedido);
+
+      // 🔥 ENVIAR LA COMPRA AL SERVIDOR (base de datos en memoria)
+      try {
+        const usuarioActivo = JSON.parse(localStorage.getItem('usuario_activo') || 'null');
+        if (usuarioActivo && usuarioActivo.correo) {
+          // Preparar datos para el servidor
+          const compraData = {
+            usuarioId: usuarioActivo.correo, // Usamos correo como identificador
+            producto: resumen.map(i => i.nombre).join(', '),
+            cantidad: resumen.length,
+            precioTotal: total
+          };
+          
+          // Enviar al servidor
+          fetch('/compra', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(compraData)
+          }).then(r => r.text()).then(msg => {
+            console.log('✅ Compra enviada al servidor:', msg);
+          }).catch(err => {
+            console.warn('⚠️ No se pudo enviar al servidor:', err);
+          });
+        }
+      } catch (e) {
+        console.error('Error al enviar compra:', e);
+      }
+
+      // agradecer y redirigir
+      if (delivery === 'domicilio'){
+        alert('Se llevará a domicilio. ¡Muchas gracias por tu compra!');
+      } else {
+        alert('¡Muchas gracias por tu compra!');
+      }
+      try{ localStorage.removeItem('carrito_v1'); }catch(e){}
+      renderCarritoEnVenta();
+      window.location.href = 'index.html';
+    });
+
+    // Mostrar/ocultar formulario de tarjeta según método
+    function toggleCardForm(){
+      const metodo = document.querySelector('input[name="metodoPago"]:checked').value;
+      const cardForm = document.getElementById('cardForm');
+      if(metodo === 'tarjeta') cardForm.style.display = 'block'; else cardForm.style.display = 'none';
+    }
+    document.querySelectorAll('input[name="metodoPago"]').forEach(r => r.addEventListener('change', toggleCardForm));
+    // Inicializar
+    toggleCardForm();
+
+    function formatExpiryInput(){
+      const el = document.getElementById('cardExp');
+      if(!el) return;
+      let v = String(el.value || '').trim();
+      if (!v) return;
+      // quitar espacios y caracteres no numéricos salvo '/'
+      v = v.replace(/\s+/g,'').replace(/[^0-9\/]*/g,'');
+      if (v.includes('/')){
+        const parts = v.split('/').map(p=>p.trim());
+        let m = parts[0] || '';
+        let y = parts[1] || '';
+        if (m.length === 1) m = '0' + m;
+        el.value = m + '/' + y;
+        return;
+      }
+      const digits = v.replace(/\D/g,'');
+      if (digits.length === 3){
+        // MYY -> MM/YY
+        const month = digits.charAt(0).padStart(2,'0');
+        const year = digits.slice(1);
+        el.value = month + '/' + year;
+      } else if (digits.length === 4){
+        // MMYY -> MM/YY
+        const month = digits.slice(0,2);
+        const year = digits.slice(2);
+        el.value = month + '/' + year;
+      } else if (digits.length === 6){
+        // MMYYYY -> MM/YYYY
+        const month = digits.slice(0,2);
+        const year = digits.slice(2);
+        el.value = month + '/' + year;
+      }
+    }
+    const cardExpEl = document.getElementById('cardExp');
+    if (cardExpEl) cardExpEl.addEventListener('blur', formatExpiryInput);
+
+    // VALIDACIÓN ESTRICTA DE AUTENTICACIÓN - Se ejecuta INMEDIATAMENTE
+    function verificarAutenticacionPago() {
+      console.log("🔐 Verificando autenticación en realizacionVentas.html");
+      
+      let usuario = null;
+      try { 
+        const stored = localStorage.getItem('usuario_activo');
+        console.log("📦 Valor de localStorage.usuario_activo:", stored);
+        
+        if (stored && stored !== 'null' && stored !== '') {
+          usuario = JSON.parse(stored);
+          console.log("✅ Usuario encontrado:", usuario);
+        } else {
+          console.log("❌ No hay usuario en localStorage");
+        }
+      } catch(e) { 
+        console.error("❌ Error al parsear usuario_activo:", e);
+        usuario = null; 
+      }
+      
+      if (!usuario || !usuario.correo) {
+        console.log("🚫 BLOQUEANDO ACCESO: No autenticado");
+        // Si no hay usuario activo, redirigir a inicio de sesión
+        alert('⚠️ Debes INICIAR SESIÓN para acceder al pago.\n\nSerás redirigido a la página de inicio de sesión.');
+        window.location.href = 'inicioSesion.html';
+        return false;
+      }
+      console.log("✅ Usuario autenticado, permitiendo acceso");
+      return true;
+    }
+
+    // Ejecutar validación INMEDIATAMENTE (no esperar a load)
+    if (!verificarAutenticacionPago()) {
+      // Si la validación falla, detener ejecución
+      throw new Error("Usuario no autenticado");
+    }
+
+    // Ejecutar también cuando la página carga
+    window.addEventListener('load', ()=>{
+      console.log("📄 Página cargada, verificando nuevamente autenticación");
+      verificarAutenticacionPago();
+      renderCarritoEnVenta();
+    });
+  </script>
+</body>
+</html>

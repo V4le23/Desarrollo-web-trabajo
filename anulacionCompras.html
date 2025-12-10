@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US-07 Anulación de Compras</title>
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    :root{--bg1:#e8f5e9;--bg2:#f0fff6;--accent:#2e7d32;--accent-2:#60a56a;--muted:#6b7280}
+    *{box-sizing:border-box}
+    body{font-family:'Inter',system-ui,Arial;background:linear-gradient(90deg,var(--bg1),var(--bg2));min-height:100vh;margin:0;padding:28px;display:flex;align-items:center;justify-content:center;color:#042613}
+    .card{background:#fff;border-radius:12px;padding:22px;box-shadow:0 12px 30px rgba(10,20,10,0.06);border:1px solid rgba(2,6,8,0.04);width:100%;max-width:520px}
+    h3{color:var(--accent);font-weight:700}
+    .btn-custom{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#042613;border:none;font-weight:700}
+    .btn-custom:hover{opacity:.95}
+    .sale-list{max-height:240px;overflow:auto;padding-right:6px}
+    .muted{color:var(--muted)}
+    .form-label{font-weight:600}
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-sm-10 col-md-6 col-lg-5">
+        <section class="card d-flex flex-column">
+          <h3 class="text-center mb-4">Anulación de Compras</h3>
+
+          <form id="anulacionForm" class="d-flex flex-column gap-3">
+            <div class="mb-3">
+              <label class="form-label">Selecciona venta a anular</label>
+              <select class="form-select" id="venta" required>
+                <option value="">Selecciona...</option>
+                <option value="Venta 1">Venta 1 - Pollo x2 | Total: $3000</option>
+                <option value="Venta 2">Venta 2 - Lechuga x1 | Total: $500</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Motivo de anulación</label>
+              <input type="text" class="form-control" id="motivo" placeholder="Ej: Error en cobro" required>
+            </div>
+            <button type="submit" class="btn btn-custom w-100">Anular Venta</button>
+          </form>
+
+          <div class="mt-4">
+            <h5 class="text-center">Ventas Anuladas</h5>
+            <ul id="anuladasList" class="list-group sale-list"></ul>
+          </div>
+
+          <div class="mt-4 text-center">
+            <a href="realizacionVentas.html" class="text-decoration-none me-3">⬅ Volver a Ventas</a>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const form = document.getElementById("anulacionForm");
+    const lista = document.getElementById("anuladasList");
+    const ventaSelect = document.getElementById('venta');
+
+    function leerCarrito(){
+      try{ return JSON.parse(localStorage.getItem('carrito_v1')||'[]'); }catch(e){ return []; }
+    }
+
+    function guardarCarrito(c){
+      try{ localStorage.setItem('carrito_v1', JSON.stringify(c)); }catch(e){ console.error(e); }
+    }
+
+    function cargarOpcionesDeCarrito(){
+      const carrito = leerCarrito();
+      ventaSelect.innerHTML = '<option value="">Selecciona...</option>';
+      if(!carrito || carrito.length === 0){
+        ventaSelect.innerHTML = '<option value="">(No hay items en el carrito)</option>';
+        form.querySelector('button[type="submit"]').disabled = true;
+        return;
+      }
+      form.querySelector('button[type="submit"]').disabled = false;
+      carrito.forEach((item, idx) => {
+        const qty = Number(item.cantidad)||1;
+        const lineTotal = (Number(item.precio)||0) * qty;
+        let label = `${item.nombre} x ${qty} - Total: $${lineTotal}`;
+        if(item.descripcion) label += ` — ${item.descripcion}`;
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = label;
+        ventaSelect.appendChild(opt);
+      });
+    }
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      const idx = document.getElementById('venta').value;
+      const motivo = document.getElementById('motivo').value.trim();
+
+      if(idx === '' || !motivo){
+        alert('Selecciona un producto y describe el motivo.');
+        return;
+      }
+
+      const carrito = leerCarrito();
+      const index = Number(idx);
+      if(index < 0 || index >= carrito.length){
+        alert('Ítem inválido. Refresca la página.');
+        return;
+      }
+
+      const item = carrito.splice(index,1)[0];
+      guardarCarrito(carrito);
+
+      // Mostrar en la lista de anuladas (no persistimos anulaciones)
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-start';
+      const left = document.createElement('div');
+      left.innerHTML = `<div><strong>${item.nombre} x ${item.cantidad || 1}</strong></div><div class="small text-muted">${item.descripcion || ''}</div><div class="small">Motivo: ${motivo}</div>`;
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-sm btn-outline-secondary';
+      btn.textContent = 'Deshacer (no disponible)';
+      // Nota: deshacer no implementado para evitar inconsistencias automáticas
+      btn.addEventListener('click', ()=>{ alert('Deshacer no disponible.'); });
+      li.appendChild(left);
+      const right = document.createElement('div');
+      right.appendChild(btn);
+      li.appendChild(right);
+
+      lista.prepend(li);
+      alert(`Producto anulado: ${item.nombre} | Motivo: ${motivo}`);
+      form.reset();
+      cargarOpcionesDeCarrito();
+    });
+
+    // Inicializar opciones
+    window.addEventListener('load', cargarOpcionesDeCarrito);
+  </script>
+</body>
+</html>

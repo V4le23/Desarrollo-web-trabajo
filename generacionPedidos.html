@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US-05 Generación de Pedidos</title>
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    :root{--bg1:#e8f5e9;--bg2:#f0fff6;--accent:#2e7d32;--accent-2:#60a56a;--muted:#6b7280}
+    *{box-sizing:border-box}
+    body{font-family:'Inter',system-ui,Arial;background:linear-gradient(90deg,var(--bg1),var(--bg2));min-height:100vh;margin:0;padding:28px;display:flex;align-items:center;justify-content:center;color:#042613}
+    .card{background:#fff;border-radius:12px;padding:22px;box-shadow:0 12px 30px rgba(10,20,10,0.06);border:1px solid rgba(2,6,8,0.04);width:100%;max-width:520px}
+    h3{color:var(--accent);font-weight:700}
+    .btn-custom{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#042613;border:none;font-weight:700}
+    .btn-custom:hover{opacity:.95}
+    .ingredient-list{max-height:220px;overflow:auto}
+    .form-check-label{font-weight:600}
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-sm-10 col-md-6 col-lg-5">
+        <section class="card d-flex flex-column">
+          <h3 class="text-center mb-3">Personaliza tu Ensalada</h3>
+
+          <form id="pedidoForm" class="d-flex flex-column gap-3">
+            <label class="form-label">Elige la base</label>
+            <select id="baseSelect" class="form-select">
+              <option value="Lechuga" data-price="500">Lechuga - $500</option>
+              <option value="Mix de hojas" data-price="700">Mix de hojas - $700</option>
+              <option value="Quinoa" data-price="900">Quinoa - $900</option>
+            </select>
+
+            <label class="form-label">Proteínas (elige hasta 2)</label>
+            <div class="ingredient-list">
+              <div class="form-check">
+                <input class="form-check-input proteina" type="checkbox" value="Pollo" id="pollo">
+                <label class="form-check-label" for="pollo">Pollo ($1500)</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input proteina" type="checkbox" value="Atún" id="atun">
+                <label class="form-check-label" for="atun">Atún ($1400)</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input proteina" type="checkbox" value="Tofu" id="tofu">
+                <label class="form-check-label" for="tofu">Tofu ($1200)</label>
+              </div>
+            </div>
+
+            <label class="form-label">Extras</label>
+            <div class="ingredient-list">
+              <div class="form-check">
+                <input class="form-check-input extra" type="checkbox" value="Tomate" id="tomate">
+                <label class="form-check-label" for="tomate">Tomate ($400)</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input extra" type="checkbox" value="Palta" id="palta">
+                <label class="form-check-label" for="palta">Palta ($900)</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input extra" type="checkbox" value="Queso" id="queso">
+                <label class="form-check-label" for="queso">Queso ($600)</label>
+              </div>
+            </div>
+
+            <label class="form-label">Aderezo</label>
+            <select id="aderezoSelect" class="form-select">
+              <option value="Sin aderezo" data-price="0">Sin aderezo - $0</option>
+              <option value="César" data-price="200">César - $200</option>
+              <option value="Agridulce" data-price="150">Agridulce - $150</option>
+              <option value="Vinagreta" data-price="120">Vinagreta - $120</option>
+            </select>
+
+            <label class="form-label">Tamaño</label>
+            <select id="tamanoSelect" class="form-select">
+              <option value="Pequeña" data-price="0">Pequeña (base) - $0</option>
+              <option value="Mediana" data-price="1200">Mediana +$1200</option>
+              <option value="Grande" data-price="2400">Grande +$2400</option>
+            </select>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-outline-secondary flex-fill">Confirmar y Pagar</button>
+            </div>
+          </form>
+
+          <div class="mt-3 text-center">
+            <p id="total" class="fw-bold">Total: $0</p>
+          </div>
+
+          <!-- Mensaje de confirmación que aparece tras Confirmar y Pagar -->
+          <div id="confirmMsg" class="alert alert-success d-none mt-3" role="alert">
+            <div id="confirmText"><strong>¡Muchas gracias!</strong> Ensalada creada.</div>
+            <div class="mt-2">
+              <a href="realizacionVentas.html" id="goVentasBtn" class="btn btn-sm btn-primary me-2">Ir a Ventas</a>
+              <button id="closeConfirmBtn" class="btn btn-sm btn-secondary">Cerrar</button>
+            </div>
+          </div>
+
+          <!-- Enlace a Ventas eliminado según solicitud -->
+        </section>
+  </div>
+    </div>
+  </main>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const form = document.getElementById("pedidoForm");
+  const totalEl = document.getElementById("total");
+
+    const precios = {
+      "Lechuga": 500,
+      "Mix de hojas": 700,
+      "Quinoa": 900,
+      "Pollo": 1500,
+      "Atún": 1400,
+      "Tofu": 1200,
+      "Tomate": 400,
+      "Palta": 900,
+      "Queso": 600,
+      "César": 200,
+      "Agridulce": 150,
+      "Vinagreta": 120,
+      "Pequeña": 0,
+      "Mediana": 1200,
+      "Grande": 2400
+    };
+
+    function calcularTotal(){
+      let total = 0;
+      const base = document.getElementById('baseSelect');
+      const basePrice = Number(base.selectedOptions[0].dataset.price || 0);
+      total += basePrice;
+
+      document.querySelectorAll('.proteina:checked').forEach(cb => {
+        total += precios[cb.value] || 0;
+      });
+
+      document.querySelectorAll('.extra:checked').forEach(cb => {
+        total += precios[cb.value] || 0;
+      });
+
+      const aderezo = document.getElementById('aderezoSelect');
+      total += Number(aderezo.selectedOptions[0].dataset.price || 0);
+
+      const tamano = document.getElementById('tamanoSelect');
+      total += Number(tamano.selectedOptions[0].dataset.price || 0);
+
+      totalEl.textContent = `Total: $${total.toLocaleString('es-CL')}`;
+      return total;
+    }
+
+    // limit protein selection to 2
+    document.querySelectorAll('.proteina').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const checked = Array.from(document.querySelectorAll('.proteina:checked'));
+        if(checked.length > 2){
+          cb.checked = false;
+          alert('Puedes seleccionar hasta 2 proteínas');
+        }
+        calcularTotal();
+      });
+    });
+
+    document.querySelectorAll('.extra').forEach(cb => cb.addEventListener('change', calcularTotal));
+    document.getElementById('baseSelect').addEventListener('change', calcularTotal);
+    document.getElementById('aderezoSelect').addEventListener('change', calcularTotal);
+    document.getElementById('tamanoSelect').addEventListener('change', calcularTotal);
+
+    // initialize total
+    calcularTotal();
+
+    function obtenerCarrito(){
+      try{ return JSON.parse(localStorage.getItem('carrito_v1') || '[]'); }catch(e){ return []; }
+    }
+
+    function guardarCarrito(carrito){
+      try{ localStorage.setItem('carrito_v1', JSON.stringify(carrito)); }catch(e){ console.error(e); }
+    }
+
+    function construirEnsaladaObjeto(){
+      const base = document.getElementById('baseSelect').value;
+      const proteinas = Array.from(document.querySelectorAll('.proteina:checked')).map(n=>n.value);
+      const extras = Array.from(document.querySelectorAll('.extra:checked')).map(n=>n.value);
+      const aderezo = document.getElementById('aderezoSelect').value;
+      const tamano = document.getElementById('tamanoSelect').value;
+      const total = calcularTotal();
+
+      const nombre = `Ensalada personalizada (${tamano})`;
+      const descripcion = `Base: ${base}; Proteínas: ${proteinas.join(', ') || 'Ninguna'}; Extras: ${extras.join(', ') || 'Ninguno'}; Aderezo: ${aderezo}`;
+
+      return { id: 'ensalada_' + Date.now(), nombre, descripcion, precio: total, cantidad: 1 };
+    }
+
+    // Nota: el botón 'Agregar al carrito' fue eliminado. El formulario submit sigue agregando la ensalada y redirige a la venta.
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      const proteinas = Array.from(document.querySelectorAll('.proteina:checked'));
+      if(proteinas.length === 0){
+        if(!confirm('No seleccionaste proteínas. Deseas continuar?')) return;
+      }
+
+      const ensalada = construirEnsaladaObjeto();
+      const carrito = obtenerCarrito();
+      carrito.push({ nombre: ensalada.nombre, precio: ensalada.precio, cantidad: ensalada.cantidad, descripcion: ensalada.descripcion });
+      guardarCarrito(carrito);
+
+      // Mostrar mensaje de confirmación en la misma página
+      const confirmMsg = document.getElementById('confirmMsg');
+      const confirmText = document.getElementById('confirmText');
+      confirmText.innerHTML = `<strong>¡Muchas gracias!</strong> Ensalada creada. Total: $${ensalada.precio.toLocaleString('es-CL')}`;
+      confirmMsg.classList.remove('d-none');
+
+      // Mantener la página; el usuario puede ir a ventas con el botón o cerrar el mensaje
+      const closeBtn = document.getElementById('closeConfirmBtn');
+      if (closeBtn) closeBtn.onclick = () => { confirmMsg.classList.add('d-none'); };
+    });
+  </script>
+</body>
+</html>
